@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>World Cup Round of 32 Predictor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Work+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --night:#0B1F17;
+    --surface:#102921;
+    --surface-2:#163428;
+    --line: rgba(244,241,232,0.10);
+    --gold:#E8B339;
+    --gold-dim: rgba(232,179,57,0.18);
+    --pitch:#2F9E5C;
+    --chalk:#F4F1E8;
+    --muted:#8FA89A;
+    --danger:#D9684A;
+  }
+  *{box-sizing:border-box;}
+  body, .wc-root{
+    background: var(--night);
+    color: var(--chalk);
+    font-family: 'Work Sans', sans-serif;
+    margin:0;
+    padding:0;
+  }
+  .wc-root{
+    min-height:100%;
+    background-image:
+      radial-gradient(circle at 15% 0%, rgba(47,158,92,0.16), transparent 45%),
+      radial-gradient(circle at 85% 10%, rgba(232,179,57,0.10), transparent 40%);
+    padding: 28px 18px 60px;
+  }
+  .wc-wrap{ max-width: 720px; margin: 0 auto; }
+
+  .wc-head{ margin-bottom: 22px; }
+  .wc-eyebrow{
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px; letter-spacing:.14em; text-transform:uppercase;
+    color: var(--gold); margin:0 0 8px;
+  }
+  .wc-title{
+    font-family:'Anton', sans-serif;
+    font-size: 38px; line-height:1.02; letter-spacing:.01em;
+    margin:0 0 6px; text-transform:uppercase;
+  }
+  .wc-sub{ color: var(--muted); font-size:14px; margin:0; max-width:520px; }
+
+  .wc-card{
+    background: var(--surface);
+    border:1px solid var(--line);
+    border-radius: 10px;
+    padding: 16px 16px 14px;
+    margin-bottom:12px;
+  }
+  .wc-field{ margin-bottom:14px; }
+  .wc-label{
+    display:block; font-size:12px; color:var(--muted); margin-bottom:6px;
+    letter-spacing:.03em; text-transform:uppercase; font-weight:600;
+  }
+  .wc-input{
+    width:100%; background:var(--night); border:1px solid var(--line);
+    color:var(--chalk); border-radius:7px; padding:10px 12px; font-size:15px;
+    font-family:'Work Sans'; outline:none;
+  }
+  .wc-input:focus{ border-color: var(--gold); }
+
+  .wc-match-meta{
+    font-family:'JetBrains Mono', monospace; font-size:11px; color: var(--muted);
+    text-transform:uppercase; letter-spacing:.06em; margin-bottom:10px;
+    display:flex; justify-content:space-between; gap:10px;
+  }
+  .wc-scoreboard{
+    display:grid; grid-template-columns: 1fr 64px 18px 64px 1fr; align-items:center; gap:8px;
+  }
+  .wc-team{ font-size:15px; font-weight:600; }
+  .wc-team.right{ text-align:right; }
+  .wc-score-input{
+    width:100%; background: var(--surface-2); border:1px solid var(--line);
+    color: var(--gold); font-family:'Anton'; font-size:26px; text-align:center;
+    border-radius:7px; padding:8px 0 6px; -moz-appearance: textfield;
+  }
+  .wc-score-input::-webkit-outer-spin-button, .wc-score-input::-webkit-inner-spin-button{
+    -webkit-appearance:none; margin:0;
+  }
+  .wc-score-input:focus{ outline:none; border-color: var(--gold); }
+  .wc-colon{ text-align:center; color:var(--muted); font-family:'Anton'; font-size:22px; }
+
+  .wc-tiebreak{
+    margin-top:12px; padding-top:12px; border-top:1px dashed var(--line);
+    display:none;
+  }
+  .wc-tiebreak.show{ display:block; }
+  .wc-tie-label{
+    font-size:12px; color: var(--gold); margin-bottom:8px; font-weight:600;
+  }
+  .wc-tiebreak .wc-scoreboard{ margin-bottom:4px; }
+  .wc-et-input, .wc-pen-input{ font-size:20px; padding:6px 0 4px; }
+  .wc-pen-section{
+    margin-top:10px; padding-top:10px; border-top:1px dashed var(--line); display:none;
+  }
+  .wc-pen-section.show{ display:block; }
+
+  .wc-btn{
+    background: var(--gold); color: var(--night); border:none; border-radius:8px;
+    font-family:'Work Sans'; font-weight:700; font-size:14px; padding:13px 20px;
+    cursor:pointer; width:100%; margin-top:6px; letter-spacing:.01em;
+  }
+  .wc-btn:disabled{ opacity:.45; cursor:default; }
+  .wc-btn.ghost{
+    background:none; color:var(--chalk); border:1px solid var(--line); width:auto;
+  }
+  .wc-btn.small{ width:auto; padding:9px 14px; font-size:12px; }
+
+  .wc-banner{
+    background: rgba(47,158,92,0.14); border:1px solid rgba(47,158,92,0.35);
+    color: var(--chalk); border-radius:8px; padding:12px 14px; font-size:13px;
+    margin-bottom:16px; display:none;
+  }
+  .wc-banner.show{ display:block; }
+  .wc-error{
+    background: rgba(217,104,74,0.14); border:1px solid rgba(217,104,74,0.4);
+    color: var(--chalk); border-radius:8px; padding:10px 14px; font-size:13px; margin-bottom:14px; display:none;
+  }
+  .wc-error.show{ display:block; }
+
+  .wc-foot{
+    text-align:center; margin-top:18px; font-size:12px; color: var(--muted);
+  }
+</style>
+</head>
+<body>
+
+<div class="wc-root">
+  <div class="wc-wrap">
+    <div class="wc-head">
+      <p class="wc-eyebrow">2026 FIFA World Cup &middot; Knockouts begin June 28</p>
+      <h1 class="wc-title">Round of 32 Predictor</h1>
+      <p class="wc-sub">Predict every scoreline. For matches still level after 90 minutes, add the score after extra time &mdash; and penalties if it's still level after that.</p>
+    </div>
+    <div id="viewPredict"></div>
+  </div>
+</div>
+
+<script>
+(function(){
+
+  var ORGANIZER_EMAIL = "tomkar92507@hotmail.com";
+
+  // Edit team names here once groups are confirmed.
+  var FIXTURES = [
+    {id:73, when:"Sun Jun 28, 8pm \u2014 Los Angeles", teamA:"Group A Runner-up", teamB:"Group B Runner-up"},
+    {id:76, when:"Mon Jun 29, 6pm \u2014 Houston", teamA:"Group C Winner", teamB:"Group F Runner-up"}
+  ];
+
+  function esc(s){
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+
+  function renderPredict(){
+    var el = document.getElementById('viewPredict');
+    var rows = FIXTURES.map(function(f, i){
+      return (
+        '<div class="wc-card">' +
+          '<div class="wc-match-meta"><span>Match ' + f.id + '</span><span>' + esc(f.when) + '</span></div>' +
+          '<div class="wc-scoreboard">' +
+            '<div class="wc-team">' + esc(f.teamA) + '</div>' +
+            '<input class="wc-score-input wc-90-input" type="number" min="0" max="20" inputmode="numeric" data-idx="' + i + '" data-side="a" oninput="wcOnScore(' + i + ')"/>' +
+            '<div class="wc-colon">:</div>' +
+            '<input class="wc-score-input wc-90-input" type="number" min="0" max="20" inputmode="numeric" data-idx="' + i + '" data-side="b" oninput="wcOnScore(' + i + ')"/>' +
+            '<div class="wc-team right">' + esc(f.teamB) + '</div>' +
+          '</div>' +
+          '<div class="wc-tiebreak" id="tie-' + i + '">' +
+            '<div class="wc-tie-label">Level after 90 mins \u2014 what\'s the score after extra time?</div>' +
+            '<div class="wc-scoreboard">' +
+              '<div class="wc-team">' + esc(f.teamA) + '</div>' +
+              '<input class="wc-score-input wc-et-input" type="number" min="0" max="20" inputmode="numeric" data-idx="' + i + '" data-side="a" oninput="wcOnEtScore(' + i + ')"/>' +
+              '<div class="wc-colon">:</div>' +
+              '<input class="wc-score-input wc-et-input" type="number" min="0" max="20" inputmode="numeric" data-idx="' + i + '" data-side="b" oninput="wcOnEtScore(' + i + ')"/>' +
+              '<div class="wc-team right">' + esc(f.teamB) + '</div>' +
+            '</div>' +
+            '<div class="wc-pen-section" id="pensec-' + i + '">' +
+              '<div class="wc-tie-label">Still level \u2014 penalty shootout score</div>' +
+              '<div class="wc-scoreboard">' +
+                '<div class="wc-team">' + esc(f.teamA) + '</div>' +
+                '<input class="wc-score-input wc-pen-input" type="number" min="0" max="20" inputmode="numeric" data-idx="' + i + '" data-side="a"/>' +
+                '<div class="wc-colon">:</div>' +
+                '<input class="wc-score-input wc-pen-input" type="number" min="0" max="20" inputmode="numeric" data-idx="' + i + '" data-side="b"/>' +
+                '<div class="wc-team right">' + esc(f.teamB) + '</div>' +
+              '</div>' +
+            '</div>' +
+          '</div>' +
+        '</div>'
+      );
+    }).join('');
+
+    el.innerHTML =
+      '<div class="wc-error" id="wcError"></div>' +
+      '<div class="wc-card">' +
+        '<div class="wc-field">' +
+          '<label class="wc-label">Your name</label>' +
+          '<input class="wc-input" id="wcName" placeholder="e.g. Sam Carter" autocomplete="name"/>' +
+        '</div>' +
+      '</div>' +
+      rows +
+      '<button class="wc-btn" id="wcSubmit" onclick="wcSubmit()">Get my predictions to send</button>' +
+      '<div id="wcResult"></div>' +
+      '<p class="wc-foot">Nothing is stored or sent automatically by this page &mdash; you copy your picks and send them yourself.</p>';
+  }
+
+  window.wcOnScore = function(i){
+    var a = document.querySelector('.wc-90-input[data-idx="'+i+'"][data-side="a"]').value;
+    var b = document.querySelector('.wc-90-input[data-idx="'+i+'"][data-side="b"]').value;
+    var tieBox = document.getElementById('tie-'+i);
+    var level = a !== '' && b !== '' && a === b;
+    tieBox.classList.toggle('show', level);
+    if(!level){
+      document.getElementById('pensec-'+i).classList.remove('show');
+      document.querySelectorAll('.wc-et-input[data-idx="'+i+'"]').forEach(function(el){ el.value=''; });
+      document.querySelectorAll('.wc-pen-input[data-idx="'+i+'"]').forEach(function(el){ el.value=''; });
+    }
+  };
+
+  window.wcOnEtScore = function(i){
+    var a = document.querySelector('.wc-et-input[data-idx="'+i+'"][data-side="a"]').value;
+    var b = document.querySelector('.wc-et-input[data-idx="'+i+'"][data-side="b"]').value;
+    var stillLevel = a !== '' && b !== '' && a === b;
+    var pensec = document.getElementById('pensec-'+i);
+    pensec.classList.toggle('show', stillLevel);
+    if(!stillLevel){
+      document.querySelectorAll('.wc-pen-input[data-idx="'+i+'"]').forEach(function(el){ el.value=''; });
+    }
+  };
+
+  function collectPicks(errBox){
+    var picks = [];
+    for(var i=0;i<FIXTURES.length;i++){
+      var a = document.querySelector('.wc-90-input[data-idx="'+i+'"][data-side="a"]').value;
+      var b = document.querySelector('.wc-90-input[data-idx="'+i+'"][data-side="b"]').value;
+      if(a === '' || b === ''){
+        errBox.textContent = 'Please fill in a 90-minute score for every match (Match ' + FIXTURES[i].id + ' is missing).';
+        errBox.classList.add('show');
+        return null;
+      }
+      a = parseInt(a,10); b = parseInt(b,10);
+      var etA = null, etB = null, penA = null, penB = null;
+
+      if(a === b){
+        var etAraw = document.querySelector('.wc-et-input[data-idx="'+i+'"][data-side="a"]').value;
+        var etBraw = document.querySelector('.wc-et-input[data-idx="'+i+'"][data-side="b"]').value;
+        if(etAraw === '' || etBraw === ''){
+          errBox.textContent = 'Match ' + FIXTURES[i].id + ' is level after 90 \u2014 please add the score after extra time.';
+          errBox.classList.add('show');
+          return null;
+        }
+        etA = parseInt(etAraw,10); etB = parseInt(etBraw,10);
+
+        if(etA === etB){
+          var penAraw = document.querySelector('.wc-pen-input[data-idx="'+i+'"][data-side="a"]').value;
+          var penBraw = document.querySelector('.wc-pen-input[data-idx="'+i+'"][data-side="b"]').value;
+          if(penAraw === '' || penBraw === ''){
+            errBox.textContent = 'Match ' + FIXTURES[i].id + ' is still level after extra time \u2014 please add the penalty shootout score.';
+            errBox.classList.add('show');
+            return null;
+          }
+          penA = parseInt(penAraw,10); penB = parseInt(penBraw,10);
+          if(penA === penB){
+            errBox.textContent = 'Match ' + FIXTURES[i].id + ': a penalty shootout can\'t end level \u2014 please adjust the score.';
+            errBox.classList.add('show');
+            return null;
+          }
+        }
+      }
+      picks.push({
+        matchId: FIXTURES[i].id, teamA: FIXTURES[i].teamA, teamB: FIXTURES[i].teamB,
+        scoreA: a, scoreB: b, etScoreA: etA, etScoreB: etB, penA: penA, penB: penB
+      });
+    }
+    return picks;
+  }
+
+  function formatPicks(name, picks){
+    var lines = picks.map(function(p){
+      var s = p.teamA + ' ' + p.scoreA + '-' + p.scoreB + ' ' + p.teamB;
+      if(p.etScoreA != null) s += ' (ET ' + p.etScoreA + '-' + p.etScoreB + ')';
+      if(p.penA != null) s += ' (Pens ' + p.penA + '-' + p.penB + ')';
+      return s;
+    });
+    return 'World Cup Round of 32 predictions from ' + name + ':\n\n' + lines.join('\n');
+  }
+
+  window.wcSubmit = function(){
+    var nameEl = document.getElementById('wcName');
+    var name = nameEl.value.trim();
+    var errBox = document.getElementById('wcError');
+    errBox.classList.remove('show');
+
+    if(!name){
+      errBox.textContent = 'Please enter your name first.';
+      errBox.classList.add('show');
+      nameEl.focus();
+      return;
+    }
+
+    var picks = collectPicks(errBox);
+    if(!picks) return;
+
+    var body = formatPicks(name, picks);
+    var subject = 'World Cup R32 Predictions \u2014 ' + name;
+    var btn = document.getElementById('wcSubmit');
+    btn.disabled = true; btn.textContent = 'Sending...';
+
+    fetch('https://formsubmit.co/ajax/' + encodeURIComponent(ORGANIZER_EMAIL), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify({ name: name, _subject: subject, predictions: body, _captcha: 'false' })
+    }).then(function(res){
+        if(!res.ok) throw new Error('bad response');
+        return res.json().catch(function(){ return {}; });
+      })
+      .then(function(){
+        btn.disabled = false; btn.textContent = 'Get my predictions to send';
+        var resultBox = document.getElementById('wcResult');
+        resultBox.innerHTML =
+          '<div class="wc-card">' +
+            '<div class="wc-tie-label">Sent</div>' +
+            '<p style="font-size:13px; color:var(--muted); margin:0;">Your predictions have been sent to the organizer. (If this is the very first submission ever to this form, the organizer needs to click a one-time confirmation link in their inbox before delivery starts working.)</p>' +
+          '</div>';
+        resultBox.scrollIntoView({behavior:'smooth', block:'center'});
+      })
+      .catch(function(){
+        btn.disabled = false; btn.textContent = 'Get my predictions to send';
+        showManualFallback(name, body);
+      });
+  };
+
+  function showManualFallback(name, body){
+    var subject = 'World Cup R32 Predictions \u2014 ' + name;
+    var mailto = 'mailto:' + encodeURIComponent(ORGANIZER_EMAIL) +
+      '?subject=' + encodeURIComponent(subject) +
+      '&body=' + encodeURIComponent(body);
+    var resultBox = document.getElementById('wcResult');
+    resultBox.innerHTML =
+      '<div class="wc-card">' +
+        '<div class="wc-tie-label">Couldn\'t send automatically</div>' +
+        '<p style="font-size:13px; color:var(--muted); margin:0 0 12px;">Tap below to try opening your email app, or select the text and copy it yourself to send to ' + esc(ORGANIZER_EMAIL) + '.</p>' +
+        '<a href="' + mailto + '" class="wc-btn" style="display:block; text-align:center; text-decoration:none; box-sizing:border-box;">Email these predictions</a>' +
+        '<textarea class="wc-input" id="wcResultText" readonly rows="6" style="margin-top:10px; font-family:\'JetBrains Mono\',monospace; font-size:12.5px; resize:vertical;"></textarea>' +
+      '</div>';
+    document.getElementById('wcResultText').value = body;
+    resultBox.scrollIntoView({behavior:'smooth', block:'center'});
+    setTimeout(function(){
+      var ta = document.getElementById('wcResultText');
+      ta.focus(); ta.select();
+    }, 250);
+  }
+
+  renderPredict();
+
+})();
+</script>
+
+</body>
+</html>
