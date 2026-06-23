@@ -149,6 +149,7 @@
 (function(){
 
   var ORGANIZER_EMAIL = "tomkar92507@hotmail.com";
+  var SHEET_URL = "https://script.google.com/macros/s/AKfycbxbiIJI7R9TZ4eNBPNwbhIA-OCHL_9F6P-ZwF_m1-8gaw6Dj3lQIRD2hWr5_8Ybn3pU7Q/exec";
 
   // Edit team names here once groups are confirmed.
   var FIXTURES = [
@@ -315,6 +316,16 @@
     var btn = document.getElementById('wcSubmit');
     btn.disabled = true; btn.textContent = 'Sending...';
 
+    // Silent backup write to Google Sheet (no-cors: fire-and-forget, response can't be read)
+    try{
+      fetch(SHEET_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ name: name, predictions: body })
+      }).catch(function(){ /* silent - email path below is the user-facing one */ });
+    }catch(e){}
+
     fetch('https://formsubmit.co/ajax/' + encodeURIComponent(ORGANIZER_EMAIL), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
@@ -329,7 +340,7 @@
         resultBox.innerHTML =
           '<div class="wc-card">' +
             '<div class="wc-tie-label">Sent</div>' +
-            '<p style="font-size:13px; color:var(--muted); margin:0;">Your predictions have been sent to the organizer. (If this is the very first submission ever to this form, the organizer needs to click a one-time confirmation link in their inbox before delivery starts working.)</p>' +
+            '<p style="font-size:13px; color:var(--muted); margin:0;">Your predictions have been sent to the organizer and logged. (If this is the very first submission ever to this form, the organizer needs to click a one-time confirmation link in their inbox before email delivery starts working \u2014 but the log will have it either way.)</p>' +
           '</div>';
         resultBox.scrollIntoView({behavior:'smooth', block:'center'});
       })
