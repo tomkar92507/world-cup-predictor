@@ -78,6 +78,8 @@
   }
   .wc-team{ font-size:15px; font-weight:600; }
   .wc-team.right{ text-align:right; }
+  .wc-flag{ height:14px; width:auto; margin-right:6px; vertical-align:-1px; border-radius:2px; box-shadow:0 0 0 1px rgba(244,241,232,0.15); }
+  .wc-team.right .wc-flag{ margin-right:0; margin-left:6px; }
   .wc-score-input{
     width:100%; background: var(--surface-2); border:1px solid var(--line);
     color: var(--gold); font-family:'Anton'; font-size:26px; text-align:center;
@@ -151,16 +153,44 @@
   var ORGANIZER_EMAIL = "tomkar92507@hotmail.com";
   var SHEET_URL = "https://script.google.com/macros/s/AKfycbxbiIJI7R9TZ4eNBPNwbhIA-OCHL_9F6P-ZwF_m1-8gaw6Dj3lQIRD2hWr5_8Ybn3pU7Q/exec";
 
-  // Edit team names here once groups are confirmed.
+  // Edit team names here as more teams are confirmed.
+  // flagA/flagB use ISO 3166-1 alpha-2 codes (lowercase) for known teams; omit for TBD slots.
   var FIXTURES = [
     {id:73, when:"Sun Jun 28, 8pm \u2014 Los Angeles", teamA:"Group A Runner-up", teamB:"Group B Runner-up"},
-    {id:76, when:"Mon Jun 29, 6pm \u2014 Houston", teamA:"Group C Winner", teamB:"Group F Runner-up"}
+    {id:76, when:"Mon Jun 29, 6pm \u2014 Houston", teamA:"Group C Winner", teamB:"Group F Runner-up"},
+    {id:74, when:"Mon Jun 29, 9:30pm \u2014 Foxborough", teamA:"Germany", flagA:"de", teamB:"3rd Place (A/B/C/D/F)"},
+    {id:75, when:"Tue Jun 30, 2am \u2014 Guadalupe, MX", teamA:"Group F Winner", teamB:"Group C Runner-up"},
+    {id:78, when:"Tue Jun 30, 6pm \u2014 Arlington", teamA:"Group E Runner-up", teamB:"Norway", flagB:"no"},
+    {id:77, when:"Tue Jun 30, 10pm \u2014 New Jersey", teamA:"France", flagA:"fr", teamB:"3rd Place (C/D/F/G/H)"},
+    {id:79, when:"Wed Jul 1, 2am \u2014 Mexico City", teamA:"Mexico", flagA:"mx", teamB:"3rd Place (C/E/F/H/I)"},
+    {id:80, when:"Wed Jul 1, 5pm \u2014 Atlanta", teamA:"Group L Winner", teamB:"3rd Place (E/H/I/J/K)"},
+    {id:82, when:"Wed Jul 1, 9pm \u2014 Seattle", teamA:"Group G Winner", teamB:"3rd Place (A/E/H/I/J)"},
+    {id:81, when:"Thu Jul 2, 1am \u2014 Santa Clara", teamA:"USA", flagA:"us", teamB:"3rd Place (B/E/F/I/J)"},
+    {id:84, when:"Thu Jul 2, 8pm \u2014 Los Angeles", teamA:"Group H Winner", teamB:"Group J Runner-up"},
+    {id:83, when:"Fri Jul 3, 12am \u2014 Toronto", teamA:"Group K Runner-up", teamB:"Group L Runner-up"},
+    {id:85, when:"Fri Jul 3, 4am \u2014 Vancouver", teamA:"Group B Winner", teamB:"3rd Place (E/F/G/I/J)"},
+    {id:88, when:"Fri Jul 3, 7pm \u2014 Arlington", teamA:"Group D Runner-up", teamB:"Group G Runner-up"},
+    {id:86, when:"Fri Jul 3, 11pm \u2014 Miami", teamA:"Argentina", flagA:"ar", teamB:"Group H Runner-up"},
+    {id:87, when:"Sat Jul 4, 2:30am \u2014 Kansas City", teamA:"Group K Winner", teamB:"3rd Place (D/E/I/J/L)"}
   ];
+
+  // Confirmed as of Jun 24, 2026: Mexico, USA, Germany, Argentina, France, Norway.
+  // Everything else is TBD pending the final group-stage matches.
 
   function esc(s){
     return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
       return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
     });
+  }
+
+  function teamLabel(name, flagCode){
+    var html = '';
+    if(flagCode){
+      html += '<img class="wc-flag" src="https://flagcdn.com/24x18/' + esc(flagCode) + '.png" ' +
+              'srcset="https://flagcdn.com/48x36/' + esc(flagCode) + '.png 2x" alt="" width="24" height="18">';
+    }
+    html += esc(name);
+    return html;
   }
 
   function renderPredict(){
@@ -170,29 +200,29 @@
         '<div class="wc-card">' +
           '<div class="wc-match-meta"><span>Match ' + f.id + '</span><span>' + esc(f.when) + '</span></div>' +
           '<div class="wc-scoreboard">' +
-            '<div class="wc-team">' + esc(f.teamA) + '</div>' +
+            '<div class="wc-team">' + teamLabel(f.teamA, f.flagA) + '</div>' +
             '<input class="wc-score-input wc-90-input" type="number" min="0" max="20" inputmode="numeric" data-idx="' + i + '" data-side="a" oninput="wcOnScore(' + i + ')"/>' +
             '<div class="wc-colon">:</div>' +
             '<input class="wc-score-input wc-90-input" type="number" min="0" max="20" inputmode="numeric" data-idx="' + i + '" data-side="b" oninput="wcOnScore(' + i + ')"/>' +
-            '<div class="wc-team right">' + esc(f.teamB) + '</div>' +
+            '<div class="wc-team right">' + teamLabel(f.teamB, f.flagB) + '</div>' +
           '</div>' +
           '<div class="wc-tiebreak" id="tie-' + i + '">' +
             '<div class="wc-tie-label">Level after 90 mins \u2014 what\'s the score after extra time?</div>' +
             '<div class="wc-scoreboard">' +
-              '<div class="wc-team">' + esc(f.teamA) + '</div>' +
+              '<div class="wc-team">' + teamLabel(f.teamA, f.flagA) + '</div>' +
               '<input class="wc-score-input wc-et-input" type="number" min="0" max="20" inputmode="numeric" data-idx="' + i + '" data-side="a" oninput="wcOnEtScore(' + i + ')"/>' +
               '<div class="wc-colon">:</div>' +
               '<input class="wc-score-input wc-et-input" type="number" min="0" max="20" inputmode="numeric" data-idx="' + i + '" data-side="b" oninput="wcOnEtScore(' + i + ')"/>' +
-              '<div class="wc-team right">' + esc(f.teamB) + '</div>' +
+              '<div class="wc-team right">' + teamLabel(f.teamB, f.flagB) + '</div>' +
             '</div>' +
             '<div class="wc-pen-section" id="pensec-' + i + '">' +
               '<div class="wc-tie-label">Still level \u2014 penalty shootout score</div>' +
               '<div class="wc-scoreboard">' +
-                '<div class="wc-team">' + esc(f.teamA) + '</div>' +
+                '<div class="wc-team">' + teamLabel(f.teamA, f.flagA) + '</div>' +
                 '<input class="wc-score-input wc-pen-input" type="number" min="0" max="20" inputmode="numeric" data-idx="' + i + '" data-side="a"/>' +
                 '<div class="wc-colon">:</div>' +
                 '<input class="wc-score-input wc-pen-input" type="number" min="0" max="20" inputmode="numeric" data-idx="' + i + '" data-side="b"/>' +
-                '<div class="wc-team right">' + esc(f.teamB) + '</div>' +
+                '<div class="wc-team right">' + teamLabel(f.teamB, f.flagB) + '</div>' +
               '</div>' +
             '</div>' +
           '</div>' +
@@ -209,9 +239,9 @@
         '</div>' +
       '</div>' +
       rows +
-      '<button class="wc-btn" id="wcSubmit" onclick="wcSubmit()">Get my predictions to send</button>' +
+      '<button class="wc-btn" id="wcSubmit" onclick="wcSubmit()">Submit predictions</button>' +
       '<div id="wcResult"></div>' +
-      '<p class="wc-foot">Nothing is stored or sent automatically by this page &mdash; you copy your picks and send them yourself.</p>';
+      '<p class="wc-foot">Predictions are sent to the organizer and logged automatically.</p>';
   }
 
   window.wcOnScore = function(i){
@@ -335,7 +365,7 @@
         return res.json().catch(function(){ return {}; });
       })
       .then(function(){
-        btn.disabled = false; btn.textContent = 'Get my predictions to send';
+        btn.disabled = false; btn.textContent = 'Submit predictions';
         var resultBox = document.getElementById('wcResult');
         resultBox.innerHTML =
           '<div class="wc-card">' +
@@ -345,7 +375,7 @@
         resultBox.scrollIntoView({behavior:'smooth', block:'center'});
       })
       .catch(function(){
-        btn.disabled = false; btn.textContent = 'Get my predictions to send';
+        btn.disabled = false; btn.textContent = 'Submit predictions';
         showManualFallback(name, body);
       });
   };
