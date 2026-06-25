@@ -149,17 +149,6 @@
 </head>
 <body>
 
-<iframe name="wcHiddenFrame" style="display:none;" title="submission frame"></iframe>
-<form id="wcHiddenForm" method="POST" target="wcHiddenFrame" style="display:none;">
-  <input type="hidden" name="name">
-  <input type="hidden" name="email">
-  <input type="hidden" name="_subject">
-  <input type="hidden" name="predictions">
-  <input type="hidden" name="_captcha" value="false">
-  <input type="hidden" name="_autoresponse">
-  <input type="hidden" name="_template" value="table">
-</form>
-
 <div class="wc-root">
   <div class="wc-wrap">
     <div class="wc-head">
@@ -414,45 +403,39 @@
     var btn = document.getElementById('wcSubmit');
     btn.disabled = true; btn.textContent = 'Sending...';
 
-    // Silent backup write to Google Sheet (no-cors: fire-and-forget, response can't be read)
+    // Silent backup write + confirmation email, both handled by your Apps Script
     try{
       fetch(SHEET_URL, {
         method: 'POST',
         mode: 'no-cors',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: JSON.stringify({ name: name, email: email, predictions: body })
-      }).catch(function(){ /* silent - email path below is the user-facing one */ });
+      }).catch(function(){ /* silent */ });
     }catch(e){}
 
-    var submitted = fillAndSubmitHiddenForm(name, email, subject, body);
-    if(!submitted){ btn.disabled = false; btn.textContent = 'Submit predictions'; return; }
-    // We can't read the response (cross-origin, hidden iframe), so show success
-    // after a short pause to let the request go out.
-    setTimeout(function(){
-      btn.disabled = false; btn.textContent = 'Submit predictions';
-      var resultBox = document.getElementById('wcResult');
-      resultBox.innerHTML =
-        '<div class="wc-card">' +
-          '<div class="wc-tie-label">Sent</div>' +
-          '<p style="font-size:13px; color:var(--muted); margin:0;">Your predictions have been sent to the organizer and logged. Check your inbox for a confirmation \u2014 if it doesn\'t turn up in a few minutes, check spam.</p>' +
-        '</div>';
-      resultBox.scrollIntoView({behavior:'smooth', block:'center'});
-    }, 1200);
+    fetch('https://formsubmit.co/ajax/' + encodeURIComponent(ORGANIZER_EMAIL), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify({ name: name, email: email, _subject: subject, predictions: body, _captcha: 'false' })
+    }).then(function(res){
+        if(!res.ok) throw new Error('bad response');
+        return res.json().catch(function(){ return {}; });
+      })
+      .then(function(){
+        btn.disabled = false; btn.textContent = 'Submit predictions';
+        var resultBox = document.getElementById('wcResult');
+        resultBox.innerHTML =
+          '<div class="wc-card">' +
+            '<div class="wc-tie-label">Sent</div>' +
+            '<p style="font-size:13px; color:var(--muted); margin:0;">Your predictions have been sent to the organizer and logged. Check your inbox for a confirmation \u2014 if it doesn\'t turn up in a few minutes, check spam.</p>' +
+          '</div>';
+        resultBox.scrollIntoView({behavior:'smooth', block:'center'});
+      })
+      .catch(function(){
+        btn.disabled = false; btn.textContent = 'Submit predictions';
+        showManualFallback(name, body);
+      });
   };
-
-  function fillAndSubmitHiddenForm(name, email, subject, body){
-    var form = document.getElementById('wcHiddenForm');
-    if(!form){ showManualFallback(name, body); return false; }
-    form.action = 'https://formsubmit.co/' + encodeURIComponent(ORGANIZER_EMAIL);
-    form.querySelector('input[name="name"]').value = name;
-    form.querySelector('input[name="email"]').value = email;
-    form.querySelector('input[name="_subject"]').value = subject;
-    form.querySelector('input[name="predictions"]').value = body;
-    form.querySelector('input[name="_autoresponse"]').value =
-      'Thanks ' + name + '! Your World Cup Round of 32 predictions have been received. Good luck!';
-    form.submit();
-    return true;
-  }
 
   function showManualFallback(name, body){
     var subject = 'World Cup R32 Predictions \u2014 ' + name;
