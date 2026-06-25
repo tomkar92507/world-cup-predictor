@@ -132,6 +132,14 @@
   .wc-foot{
     text-align:center; margin-top:18px; font-size:12px; color: var(--muted);
   }
+
+  .wc-notes{ margin: 14px 0 0; padding:0; list-style:none; }
+  .wc-notes li{
+    font-size:12.5px; color: var(--muted); padding-left:18px; position:relative; margin-bottom:5px;
+  }
+  .wc-notes li::before{
+    content:"\2022"; color: var(--gold); position:absolute; left:4px; font-weight:700;
+  }
 </style>
 </head>
 <body>
@@ -142,6 +150,12 @@
       <p class="wc-eyebrow">2026 FIFA World Cup &middot; Knockouts begin June 28</p>
       <h1 class="wc-title">Round of 32 Predictor</h1>
       <p class="wc-sub">Predict every scoreline. For matches still level after 90 minutes, add the score after extra time &mdash; and penalties if it's still level after that.</p>
+      <ul class="wc-notes">
+        <li>All kick-off times shown are UK time (BST).</li>
+        <li>Deadline: 5 minutes before kick-off of the first match (Sun Jun 28, 8pm BST).</li>
+        <li>Resubmitting your predictions will overwrite your previous entry.</li>
+        <li>Scores can be entered from 0 to 20 per team.</li>
+      </ul>
     </div>
     <div id="viewPredict"></div>
   </div>
@@ -156,22 +170,22 @@
   // Edit team names here as more teams are confirmed.
   // flagA/flagB use ISO 3166-1 alpha-2 codes (lowercase) for known teams; omit for TBD slots.
   var FIXTURES = [
-    {id:73, when:"Sun Jun 28, 8pm \u2014 Los Angeles", teamA:"Group A Runner-up", teamB:"Group B Runner-up"},
-    {id:76, when:"Mon Jun 29, 6pm \u2014 Houston", teamA:"Group C Winner", teamB:"Group F Runner-up"},
-    {id:74, when:"Mon Jun 29, 9:30pm \u2014 Foxborough", teamA:"Germany", flagA:"de", teamB:"3rd Place (A/B/C/D/F)"},
-    {id:75, when:"Tue Jun 30, 2am \u2014 Guadalupe, MX", teamA:"Group F Winner", teamB:"Group C Runner-up"},
-    {id:78, when:"Tue Jun 30, 6pm \u2014 Arlington", teamA:"Group E Runner-up", teamB:"Norway", flagB:"no"},
-    {id:77, when:"Tue Jun 30, 10pm \u2014 New Jersey", teamA:"France", flagA:"fr", teamB:"3rd Place (C/D/F/G/H)"},
-    {id:79, when:"Wed Jul 1, 2am \u2014 Mexico City", teamA:"Mexico", flagA:"mx", teamB:"3rd Place (C/E/F/H/I)"},
-    {id:80, when:"Wed Jul 1, 5pm \u2014 Atlanta", teamA:"Group L Winner", teamB:"3rd Place (E/H/I/J/K)"},
-    {id:82, when:"Wed Jul 1, 9pm \u2014 Seattle", teamA:"Group G Winner", teamB:"3rd Place (A/E/H/I/J)"},
-    {id:81, when:"Thu Jul 2, 1am \u2014 Santa Clara", teamA:"USA", flagA:"us", teamB:"3rd Place (B/E/F/I/J)"},
-    {id:84, when:"Thu Jul 2, 8pm \u2014 Los Angeles", teamA:"Group H Winner", teamB:"Group J Runner-up"},
-    {id:83, when:"Fri Jul 3, 12am \u2014 Toronto", teamA:"Group K Runner-up", teamB:"Group L Runner-up"},
-    {id:85, when:"Fri Jul 3, 4am \u2014 Vancouver", teamA:"Group B Winner", teamB:"3rd Place (E/F/G/I/J)"},
-    {id:88, when:"Fri Jul 3, 7pm \u2014 Arlington", teamA:"Group D Runner-up", teamB:"Group G Runner-up"},
-    {id:86, when:"Fri Jul 3, 11pm \u2014 Miami", teamA:"Argentina", flagA:"ar", teamB:"Group H Runner-up"},
-    {id:87, when:"Sat Jul 4, 2:30am \u2014 Kansas City", teamA:"Group K Winner", teamB:"3rd Place (D/E/I/J/L)"}
+    {id:73, when:"Sun Jun 28, 8pm BST \u2014 Los Angeles", teamA:"South Africa", flagA:"za", teamB:"Canada", flagB:"ca"},
+    {id:76, when:"Mon Jun 29, 6pm BST \u2014 Houston", teamA:"Brazil", flagA:"br", teamB:"Group F Runner-up"},
+    {id:74, when:"Mon Jun 29, 9:30pm BST \u2014 Foxborough", teamA:"Germany", flagA:"de", teamB:"3rd Place (A/B/C/D/F)"},
+    {id:75, when:"Tue Jun 30, 2am BST \u2014 Guadalupe, MX", teamA:"Group F Winner", teamB:"Morocco", flagB:"ma"},
+    {id:78, when:"Tue Jun 30, 6pm BST \u2014 Arlington", teamA:"Group E Runner-up", teamB:"Norway", flagB:"no"},
+    {id:77, when:"Tue Jun 30, 10pm BST \u2014 New Jersey", teamA:"France", flagA:"fr", teamB:"3rd Place (C/D/F/G/H)"},
+    {id:79, when:"Wed Jul 1, 2am BST \u2014 Mexico City", teamA:"Mexico", flagA:"mx", teamB:"3rd Place (C/E/F/H/I)"},
+    {id:80, when:"Wed Jul 1, 5pm BST \u2014 Atlanta", teamA:"Group L Winner", teamB:"3rd Place (E/H/I/J/K)"},
+    {id:82, when:"Wed Jul 1, 9pm BST \u2014 Seattle", teamA:"Group G Winner", teamB:"3rd Place (A/E/H/I/J)"},
+    {id:81, when:"Thu Jul 2, 1am BST \u2014 Santa Clara", teamA:"USA", flagA:"us", teamB:"3rd Place (B/E/F/I/J)"},
+    {id:84, when:"Thu Jul 2, 8pm BST \u2014 Los Angeles", teamA:"Group H Winner", teamB:"Group J Runner-up"},
+    {id:83, when:"Fri Jul 3, 12am BST \u2014 Toronto", teamA:"Group K Runner-up", teamB:"Group L Runner-up"},
+    {id:85, when:"Fri Jul 3, 4am BST \u2014 Vancouver", teamA:"Switzerland", flagA:"ch", teamB:"3rd Place (E/F/G/I/J)"},
+    {id:88, when:"Fri Jul 3, 7pm BST \u2014 Arlington", teamA:"Group D Runner-up", teamB:"Group G Runner-up"},
+    {id:86, when:"Fri Jul 3, 11pm BST \u2014 Miami", teamA:"Argentina", flagA:"ar", teamB:"Group H Runner-up"},
+    {id:87, when:"Sat Jul 4, 2:30am BST \u2014 Kansas City", teamA:"Colombia", flagA:"co", teamB:"3rd Place (D/E/I/J/L)"}
   ];
 
   // Confirmed as of Jun 24, 2026: Mexico, USA, Germany, Argentina, France, Norway.
@@ -237,6 +251,10 @@
           '<label class="wc-label">Your name</label>' +
           '<input class="wc-input" id="wcName" placeholder="e.g. Sam Carter" autocomplete="name"/>' +
         '</div>' +
+        '<div class="wc-field" style="margin-bottom:0;">' +
+          '<label class="wc-label">Your email</label>' +
+          '<input class="wc-input" id="wcEmail" type="email" placeholder="e.g. sam@example.com" autocomplete="email"/>' +
+        '</div>' +
       '</div>' +
       rows +
       '<button class="wc-btn" id="wcSubmit" onclick="wcSubmit()">Submit predictions</button>' +
@@ -268,6 +286,8 @@
     }
   };
 
+  function inRange(n){ return n >= 0 && n <= 20; }
+
   function collectPicks(errBox){
     var picks = [];
     for(var i=0;i<FIXTURES.length;i++){
@@ -279,6 +299,11 @@
         return null;
       }
       a = parseInt(a,10); b = parseInt(b,10);
+      if(isNaN(a) || isNaN(b) || !inRange(a) || !inRange(b)){
+        errBox.textContent = 'Match ' + FIXTURES[i].id + ': scores must be whole numbers between 0 and 20.';
+        errBox.classList.add('show');
+        return null;
+      }
       var etA = null, etB = null, penA = null, penB = null;
 
       if(a === b){
@@ -290,6 +315,11 @@
           return null;
         }
         etA = parseInt(etAraw,10); etB = parseInt(etBraw,10);
+        if(isNaN(etA) || isNaN(etB) || !inRange(etA) || !inRange(etB)){
+          errBox.textContent = 'Match ' + FIXTURES[i].id + ': extra-time score must be between 0 and 20.';
+          errBox.classList.add('show');
+          return null;
+        }
 
         if(etA === etB){
           var penAraw = document.querySelector('.wc-pen-input[data-idx="'+i+'"][data-side="a"]').value;
@@ -300,6 +330,11 @@
             return null;
           }
           penA = parseInt(penAraw,10); penB = parseInt(penBraw,10);
+          if(isNaN(penA) || isNaN(penB) || !inRange(penA) || !inRange(penB)){
+            errBox.textContent = 'Match ' + FIXTURES[i].id + ': penalty score must be between 0 and 20.';
+            errBox.classList.add('show');
+            return null;
+          }
           if(penA === penB){
             errBox.textContent = 'Match ' + FIXTURES[i].id + ': a penalty shootout can\'t end level \u2014 please adjust the score.';
             errBox.classList.add('show');
@@ -325,9 +360,13 @@
     return 'World Cup Round of 32 predictions from ' + name + ':\n\n' + lines.join('\n');
   }
 
+  var EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
   window.wcSubmit = function(){
     var nameEl = document.getElementById('wcName');
+    var emailEl = document.getElementById('wcEmail');
     var name = nameEl.value.trim();
+    var email = emailEl.value.trim();
     var errBox = document.getElementById('wcError');
     errBox.classList.remove('show');
 
@@ -335,6 +374,12 @@
       errBox.textContent = 'Please enter your name first.';
       errBox.classList.add('show');
       nameEl.focus();
+      return;
+    }
+    if(!email || !EMAIL_RE.test(email)){
+      errBox.textContent = 'Please enter a valid email address.';
+      errBox.classList.add('show');
+      emailEl.focus();
       return;
     }
 
@@ -352,14 +397,21 @@
         method: 'POST',
         mode: 'no-cors',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({ name: name, predictions: body })
+        body: JSON.stringify({ name: name, email: email, predictions: body })
       }).catch(function(){ /* silent - email path below is the user-facing one */ });
     }catch(e){}
 
     fetch('https://formsubmit.co/ajax/' + encodeURIComponent(ORGANIZER_EMAIL), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-      body: JSON.stringify({ name: name, _subject: subject, predictions: body, _captcha: 'false' })
+      body: JSON.stringify({
+        name: name,
+        email: email,
+        _subject: subject,
+        predictions: body,
+        _captcha: 'false',
+        _autoresponse: 'Thanks ' + name + '! Your World Cup Round of 32 predictions have been received. Good luck!'
+      })
     }).then(function(res){
         if(!res.ok) throw new Error('bad response');
         return res.json().catch(function(){ return {}; });
@@ -370,7 +422,7 @@
         resultBox.innerHTML =
           '<div class="wc-card">' +
             '<div class="wc-tie-label">Sent</div>' +
-            '<p style="font-size:13px; color:var(--muted); margin:0;">Your predictions have been sent to the organizer and logged.</p>' +
+            '<p style="font-size:13px; color:var(--muted); margin:0;">Your predictions have been sent to the organizer and logged. Check your inbox for a confirmation.</p>' +
           '</div>';
         resultBox.scrollIntoView({behavior:'smooth', block:'center'});
       })
