@@ -128,6 +128,11 @@
     color: var(--chalk); border-radius:8px; padding:10px 14px; font-size:13px; margin-bottom:14px; display:none;
   }
   .wc-error.show{ display:block; }
+  .wc-card-flash{ animation: wcFlash 0.4s ease-in-out 2; }
+  @keyframes wcFlash{
+    0%, 100% { box-shadow: 0 0 0 1px var(--line); }
+    50% { box-shadow: 0 0 0 2px var(--danger); }
+  }
 
   .wc-foot{
     text-align:center; margin-top:18px; font-size:12px; color: var(--muted);
@@ -144,6 +149,17 @@
 </head>
 <body>
 
+<iframe name="wcHiddenFrame" style="display:none;" title="submission frame"></iframe>
+<form id="wcHiddenForm" method="POST" target="wcHiddenFrame" style="display:none;">
+  <input type="hidden" name="name">
+  <input type="hidden" name="email">
+  <input type="hidden" name="_subject">
+  <input type="hidden" name="predictions">
+  <input type="hidden" name="_captcha" value="false">
+  <input type="hidden" name="_autoresponse">
+  <input type="hidden" name="_template" value="table">
+</form>
+
 <div class="wc-root">
   <div class="wc-wrap">
     <div class="wc-head">
@@ -154,7 +170,6 @@
         <li>All kick-off times shown are UK time (BST).</li>
         <li>Deadline: 5 minutes before kick-off of the first match (Sun Jun 28, 8pm BST).</li>
         <li>Resubmitting your predictions will overwrite your previous entry.</li>
-        <li>Scores can be entered from 0 to 20 per team.</li>
       </ul>
     </div>
     <div id="viewPredict"></div>
@@ -211,7 +226,7 @@
     var el = document.getElementById('viewPredict');
     var rows = FIXTURES.map(function(f, i){
       return (
-        '<div class="wc-card">' +
+        '<div class="wc-card" id="card-' + i + '">' +
           '<div class="wc-match-meta"><span>Match ' + f.id + '</span><span>' + esc(f.when) + '</span></div>' +
           '<div class="wc-scoreboard">' +
             '<div class="wc-team">' + teamLabel(f.teamA, f.flagA) + '</div>' +
@@ -288,56 +303,64 @@
 
   function inRange(n){ return n >= 0 && n <= 20; }
 
+  function flagMatch(i, msg, errBox, focusEl){
+    errBox.textContent = msg;
+    errBox.classList.add('show');
+    var card = document.getElementById('card-' + i);
+    if(card){
+      card.scrollIntoView({behavior:'smooth', block:'center'});
+      card.classList.add('wc-card-flash');
+      setTimeout(function(){ card.classList.remove('wc-card-flash'); }, 1600);
+    }
+    if(focusEl){ setTimeout(function(){ focusEl.focus(); }, 250); }
+  }
+
   function collectPicks(errBox){
     var picks = [];
     for(var i=0;i<FIXTURES.length;i++){
-      var a = document.querySelector('.wc-90-input[data-idx="'+i+'"][data-side="a"]').value;
-      var b = document.querySelector('.wc-90-input[data-idx="'+i+'"][data-side="b"]').value;
+      var aEl = document.querySelector('.wc-90-input[data-idx="'+i+'"][data-side="a"]');
+      var bEl = document.querySelector('.wc-90-input[data-idx="'+i+'"][data-side="b"]');
+      var a = aEl.value, b = bEl.value;
       if(a === '' || b === ''){
-        errBox.textContent = 'Please fill in a 90-minute score for every match (Match ' + FIXTURES[i].id + ' is missing).';
-        errBox.classList.add('show');
+        flagMatch(i, 'Match ' + FIXTURES[i].id + ' is missing a 90-minute score \u2014 see the highlighted match below.', errBox, (a === '' ? aEl : bEl));
         return null;
       }
       a = parseInt(a,10); b = parseInt(b,10);
       if(isNaN(a) || isNaN(b) || !inRange(a) || !inRange(b)){
-        errBox.textContent = 'Match ' + FIXTURES[i].id + ': scores must be whole numbers between 0 and 20.';
-        errBox.classList.add('show');
+        flagMatch(i, 'Match ' + FIXTURES[i].id + ': scores must be whole numbers between 0 and 20 \u2014 see the highlighted match below.', errBox, (!inRange(a) ? aEl : bEl));
         return null;
       }
       var etA = null, etB = null, penA = null, penB = null;
 
       if(a === b){
-        var etAraw = document.querySelector('.wc-et-input[data-idx="'+i+'"][data-side="a"]').value;
-        var etBraw = document.querySelector('.wc-et-input[data-idx="'+i+'"][data-side="b"]').value;
+        var etAEl = document.querySelector('.wc-et-input[data-idx="'+i+'"][data-side="a"]');
+        var etBEl = document.querySelector('.wc-et-input[data-idx="'+i+'"][data-side="b"]');
+        var etAraw = etAEl.value, etBraw = etBEl.value;
         if(etAraw === '' || etBraw === ''){
-          errBox.textContent = 'Match ' + FIXTURES[i].id + ' is level after 90 \u2014 please add the score after extra time.';
-          errBox.classList.add('show');
+          flagMatch(i, 'Match ' + FIXTURES[i].id + ' is level after 90 \u2014 add the score after extra time (highlighted below).', errBox, (etAraw === '' ? etAEl : etBEl));
           return null;
         }
         etA = parseInt(etAraw,10); etB = parseInt(etBraw,10);
         if(isNaN(etA) || isNaN(etB) || !inRange(etA) || !inRange(etB)){
-          errBox.textContent = 'Match ' + FIXTURES[i].id + ': extra-time score must be between 0 and 20.';
-          errBox.classList.add('show');
+          flagMatch(i, 'Match ' + FIXTURES[i].id + ': extra-time score must be between 0 and 20 \u2014 see the highlighted match below.', errBox, (!inRange(etA) ? etAEl : etBEl));
           return null;
         }
 
         if(etA === etB){
-          var penAraw = document.querySelector('.wc-pen-input[data-idx="'+i+'"][data-side="a"]').value;
-          var penBraw = document.querySelector('.wc-pen-input[data-idx="'+i+'"][data-side="b"]').value;
+          var penAEl = document.querySelector('.wc-pen-input[data-idx="'+i+'"][data-side="a"]');
+          var penBEl = document.querySelector('.wc-pen-input[data-idx="'+i+'"][data-side="b"]');
+          var penAraw = penAEl.value, penBraw = penBEl.value;
           if(penAraw === '' || penBraw === ''){
-            errBox.textContent = 'Match ' + FIXTURES[i].id + ' is still level after extra time \u2014 please add the penalty shootout score.';
-            errBox.classList.add('show');
+            flagMatch(i, 'Match ' + FIXTURES[i].id + ' is still level after extra time \u2014 add the penalty shootout score (highlighted below).', errBox, (penAraw === '' ? penAEl : penBEl));
             return null;
           }
           penA = parseInt(penAraw,10); penB = parseInt(penBraw,10);
           if(isNaN(penA) || isNaN(penB) || !inRange(penA) || !inRange(penB)){
-            errBox.textContent = 'Match ' + FIXTURES[i].id + ': penalty score must be between 0 and 20.';
-            errBox.classList.add('show');
+            flagMatch(i, 'Match ' + FIXTURES[i].id + ': penalty score must be between 0 and 20 \u2014 see the highlighted match below.', errBox, (!inRange(penA) ? penAEl : penBEl));
             return null;
           }
           if(penA === penB){
-            errBox.textContent = 'Match ' + FIXTURES[i].id + ': a penalty shootout can\'t end level \u2014 please adjust the score.';
-            errBox.classList.add('show');
+            flagMatch(i, 'Match ' + FIXTURES[i].id + ': a penalty shootout can\'t end level \u2014 adjust the score in the highlighted match below.', errBox, penAEl);
             return null;
           }
         }
@@ -401,36 +424,35 @@
       }).catch(function(){ /* silent - email path below is the user-facing one */ });
     }catch(e){}
 
-    fetch('https://formsubmit.co/ajax/' + encodeURIComponent(ORGANIZER_EMAIL), {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-      body: JSON.stringify({
-        name: name,
-        email: email,
-        _subject: subject,
-        predictions: body,
-        _captcha: 'false',
-        _autoresponse: 'Thanks ' + name + '! Your World Cup Round of 32 predictions have been received. Good luck!'
-      })
-    }).then(function(res){
-        if(!res.ok) throw new Error('bad response');
-        return res.json().catch(function(){ return {}; });
-      })
-      .then(function(){
-        btn.disabled = false; btn.textContent = 'Submit predictions';
-        var resultBox = document.getElementById('wcResult');
-        resultBox.innerHTML =
-          '<div class="wc-card">' +
-            '<div class="wc-tie-label">Sent</div>' +
-            '<p style="font-size:13px; color:var(--muted); margin:0;">Your predictions have been sent to the organizer and logged. Check your inbox for a confirmation.</p>' +
-          '</div>';
-        resultBox.scrollIntoView({behavior:'smooth', block:'center'});
-      })
-      .catch(function(){
-        btn.disabled = false; btn.textContent = 'Submit predictions';
-        showManualFallback(name, body);
-      });
+    var submitted = fillAndSubmitHiddenForm(name, email, subject, body);
+    if(!submitted){ btn.disabled = false; btn.textContent = 'Submit predictions'; return; }
+    // We can't read the response (cross-origin, hidden iframe), so show success
+    // after a short pause to let the request go out.
+    setTimeout(function(){
+      btn.disabled = false; btn.textContent = 'Submit predictions';
+      var resultBox = document.getElementById('wcResult');
+      resultBox.innerHTML =
+        '<div class="wc-card">' +
+          '<div class="wc-tie-label">Sent</div>' +
+          '<p style="font-size:13px; color:var(--muted); margin:0;">Your predictions have been sent to the organizer and logged. Check your inbox for a confirmation \u2014 if it doesn\'t turn up in a few minutes, check spam.</p>' +
+        '</div>';
+      resultBox.scrollIntoView({behavior:'smooth', block:'center'});
+    }, 1200);
   };
+
+  function fillAndSubmitHiddenForm(name, email, subject, body){
+    var form = document.getElementById('wcHiddenForm');
+    if(!form){ showManualFallback(name, body); return false; }
+    form.action = 'https://formsubmit.co/' + encodeURIComponent(ORGANIZER_EMAIL);
+    form.querySelector('input[name="name"]').value = name;
+    form.querySelector('input[name="email"]').value = email;
+    form.querySelector('input[name="_subject"]').value = subject;
+    form.querySelector('input[name="predictions"]').value = body;
+    form.querySelector('input[name="_autoresponse"]').value =
+      'Thanks ' + name + '! Your World Cup Round of 32 predictions have been received. Good luck!';
+    form.submit();
+    return true;
+  }
 
   function showManualFallback(name, body){
     var subject = 'World Cup R32 Predictions \u2014 ' + name;
